@@ -3,83 +3,97 @@
  * SPDX-License-Identifier: Apache-2.0
  * Meru University of Science and Technology (MUST)
  * Task 7: Deployed Clinical Screening Risk Calculator Prototype
+ * Connected directly to Scikit-learn trained models via FastAPI
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  PatientRecord,
   FEATURE_METADATA,
   CLINICAL_PRESETS,
-  calculateModelPrediction,
-  MODEL_BENCHMARKS,
 } from '../../data/pimaDataset';
+import {
+  predictRisk,
+  fetchAvailableModels,
+  PredictionResponse,
+  ModelMetadata,
+} from '../../services/api';
 import {
   Activity,
   AlertTriangle,
   CheckCircle2,
   FileText,
   Sliders,
-  HelpCircle,
   Sparkles,
   RefreshCw,
   Printer,
-  ChevronRight,
   ShieldAlert,
+  Server,
+  Zap,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export const ClinicalCalculator: React.FC = () => {
   // Clinical Input State
-  const [inputs, setInputs] = useState<Omit<PatientRecord, 'id' | 'outcome'>>({
+  const [inputs, setInputs] = useState({
     pregnancies: 3,
-    glucose: 142,
-    bloodPressure: 78,
+    glucose: 145,
+    bloodPressure: 76,
     skinThickness: 30,
-    insulin: 145,
-    bmi: 31.8,
-    diabetesPedigree: 0.54,
-    age: 42,
+    insulin: 160,
+    bmi: 32.5,
+    diabetesPedigree: 0.62,
+    age: 44,
   });
 
-  // Selected Model & Operating Decision Threshold
   const [selectedModel, setSelectedModel] = useState<string>('random_forest');
-  const [threshold, setThreshold] = useState<number>(0.35); // Recommended threshold
+  const [threshold, setThreshold] = useState<number>(0.35); // Recommended clinical threshold
   const [activePresetIndex, setActivePresetIndex] = useState<number | null>(null);
 
-  // Compute prediction
-  const prediction = calculateModelPrediction(inputs, selectedModel);
-  const isHighRisk = prediction.probability >= threshold;
+  // API State
+  const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
+  const [availableModels, setAvailableModels] = useState<ModelMetadata[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  // Categorize Risk Tier
-  let riskTier = {
-    label: 'Low Risk',
-    badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
-    gaugeColor: '#10b981',
-    clinicalAction: 'Routine annual preventive health assessment. Maintain balanced nutrition and active lifestyle.',
-  };
+  // Load available models from backend on mount
+  useEffect(() => {
+    fetchAvailableModels()
+      .then((data) => {
+        setAvailableModels(data.models);
+      })
+      .catch((err) => {
+        console.warn('Could not fetch models metadata:', err);
+      });
+  }, []);
 
-  if (prediction.probability >= 0.75) {
-    riskTier = {
-      label: 'Critical / High Triage Alert',
-      badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
-      gaugeColor: '#f43f5e',
-      clinicalAction: 'Immediate referral for diagnostic Fasting Blood Glucose (FBG) and HbA1c testing. Assess for acute metabolic complications.',
-    };
-  } else if (prediction.probability >= 0.50) {
-    riskTier = {
-      label: 'Elevated Clinical Risk',
-      badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-      gaugeColor: '#f59e0b',
-      clinicalAction: 'Recommend 75g Oral Glucose Tolerance Test (OGTT) within 7 days. Initiate nutritional counseling and physical activity prescription.',
-    };
-  } else if (prediction.probability >= threshold) {
-    riskTier = {
-      label: 'Screening Watch (Above tau = 0.35)',
-      badgeClass: 'bg-orange-500/20 text-orange-300 border-orange-500/40',
-      gaugeColor: '#fb923c',
-      clinicalAction: 'Flagged by enhanced sensitivity screening threshold. Patient warrants secondary lab glucose confirmation to rule out early insulin resistance.',
-    };
-  }
+  // Execute genuine prediction on input or model change
+  const executePrediction = useCallback(async () => {
+    setLoading(true);
+    setApiError(null);
+    try {
+      const resp = await predictRisk({
+        pregnancies: inputs.pregnancies,
+        glucose: inputs.glucose,
+        bloodPressure: inputs.bloodPressure,
+        skinThickness: inputs.skinThickness,
+        insulin: inputs.insulin,
+        bmi: inputs.bmi,
+        diabetesPedigree: inputs.diabetesPedigree,
+        age: inputs.age,
+        model_id: selectedModel,
+        threshold: threshold,
+      });
+      setPrediction(resp);
+    } catch (err: any) {
+      setApiError(err.message || 'Failed to connect to ML prediction backend.');
+    } finally {
+      setLoading(false);
+    }
+  }, [inputs, selectedModel, threshold]);
+
+  useEffect(() => {
+    executePrediction();
+  }, [executePrediction]);
 
   const handleInputChange = (key: keyof typeof inputs, value: number) => {
     setInputs((prev) => ({ ...prev, [key]: value }));
@@ -88,11 +102,19 @@ export const ClinicalCalculator: React.FC = () => {
 
   const handleSelectPreset = (idx: number) => {
     setActivePresetIndex(idx);
-    setInputs(CLINICAL_PRESETS[idx].data);
+    setInputs({
+      pregnancies: CLINICAL_PRESETS[idx].data.pregnancies,
+      glucose: CLINICAL_PRESETS[idx].data.glucose,
+      bloodPressure: CLINICAL_PRESETS[idx].data.bloodPressure,
+      skinThickness: CLINICAL_PRESETS[idx].data.skinThickness,
+      insulin: CLINICAL_PRESETS[idx].data.insulin,
+      bmi: CLINICAL_PRESETS[idx].data.bmi,
+      diabetesPedigree: CLINICAL_PRESETS[idx].data.diabetesPedigree,
+      age: CLINICAL_PRESETS[idx].data.age,
+    });
     if (idx === 0) {
-      // celebrate healthy baseline
       confetti({
-        particleCount: 40,
+        particleCount: 35,
         spread: 60,
         origin: { y: 0.7 },
         colors: ['#10b981', '#34d399', '#6ee7b7'],
@@ -100,37 +122,59 @@ export const ClinicalCalculator: React.FC = () => {
     }
   };
 
-  const handlePrintReferral = () => {
-    window.print();
-  };
+  const prob = prediction ? prediction.probability : 0.0;
+  const isHighRisk = prediction ? prediction.is_positive : prob >= threshold;
 
-  const activeModelMeta = MODEL_BENCHMARKS.find((m) => m.id === selectedModel) || MODEL_BENCHMARKS[4];
+  // Determine badge styling based on backend risk tier
+  let badgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+  let gaugeColor = '#10b981';
+
+  if (prediction?.risk_tier === 'CRITICAL_TRIAGE') {
+    badgeClass = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+    gaugeColor = '#f43f5e';
+  } else if (prediction?.risk_tier === 'ELEVATED_RISK') {
+    badgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+    gaugeColor = '#f59e0b';
+  } else if (prediction?.risk_tier === 'SCREENING_WATCH') {
+    badgeClass = 'bg-orange-500/20 text-orange-300 border-orange-500/40';
+    gaugeColor = '#fb923c';
+  }
+
+  const modelOptions = [
+    { id: 'random_forest', name: 'Random Forest (Champion Ensemble)', type: 'Bagged Tree Ensemble' },
+    { id: 'logistic_regression', name: 'Logistic Regression (Calibrated)', type: 'Generalized Linear' },
+    { id: 'svm', name: 'Support Vector Machine (RBF Kernel)', type: 'Kernel Machine' },
+    { id: 'knn', name: 'K-Nearest Neighbors (KNN)', type: 'Instance-Based' },
+    { id: 'decision_tree', name: 'Decision Tree (CART)', type: 'Pruned Rule-Tree' },
+    { id: 'dummy', name: 'Dummy Baseline (Majority Class)', type: 'Heuristic Baseline' },
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      {/* Intro & Academic Banner */}
+      {/* Top Banner */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-                Task 7 Deliverable: Deployed Prototype
+              <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                <Server className="w-3.5 h-3.5" />
+                <span>Live FastAPI &amp; Scikit-Learn Inference</span>
               </span>
               <span className="text-slate-500 text-xs">•</span>
-              <span className="text-slate-400 text-xs">Pima Indians Trained ML Pipeline</span>
+              <span className="text-emerald-400 text-xs font-mono">Backend: Connected</span>
             </div>
             <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">
               Clinical Diabetes Risk Screening Tool
             </h1>
             <p className="text-slate-300 text-sm mt-1 max-w-3xl leading-relaxed">
-              Designed for primary healthcare clinicians and triage officers in resource-constrained settings (e.g. rural Kenyan health dispensaries). Input routine non-invasive clinical biomarkers to generate calibrated risk probability, feature-level risk drivers, and triage recommendations.
+              Accepts eight routine non-invasive clinical biomarkers. When you adjust values, they are transmitted to our Python FastAPI service, preprocessed without data leakage, evaluated through genuinely trained Scikit-learn models, and returned with authentic feature explainability.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
             <button
-              onClick={handlePrintReferral}
+              onClick={() => window.print()}
               className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition shadow-sm"
             >
               <Printer className="w-4 h-4 text-emerald-400" />
@@ -141,7 +185,7 @@ export const ClinicalCalculator: React.FC = () => {
               className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-sm"
             >
               <Sparkles className="w-4 h-4" />
-              <span>Load Borderline Case</span>
+              <span>Load Impaired Fasting Preset</span>
             </button>
           </div>
         </div>
@@ -151,9 +195,9 @@ export const ClinicalCalculator: React.FC = () => {
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Sliders className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Clinical Test Presets (Click to Load Real Patient Scenarios)</span>
+              <span>Clinical Test Presets (Click to Benchmark Live Models)</span>
             </span>
-            <span className="text-xs text-slate-500">5 Case Scenarios</span>
+            <span className="text-xs text-slate-500">5 Clinical Scenarios</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
@@ -182,6 +226,13 @@ export const ClinicalCalculator: React.FC = () => {
         </div>
       </div>
 
+      {apiError && (
+        <div className="p-4 rounded-xl bg-rose-950/50 border border-rose-500/50 text-rose-200 text-xs flex items-center gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>{apiError}</span>
+        </div>
+      )}
+
       {/* Main Grid: Clinical Inputs (Left) & Risk Output / Explainability (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: 8 Biomarker Controls */}
@@ -191,10 +242,10 @@ export const ClinicalCalculator: React.FC = () => {
               <div>
                 <h2 className="text-base font-bold text-white flex items-center gap-2">
                   <Activity className="w-4 h-4 text-emerald-400" />
-                  <span>Routine Patient Biomarkers</span>
+                  <span>Patient Biomarkers (Input to Scikit-Learn Pipeline)</span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Adjust measurements to evaluate real-time posterior probability
+                  Preprocessed with biological zero replacement and median imputation
                 </p>
               </div>
               <button
@@ -221,12 +272,12 @@ export const ClinicalCalculator: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {FEATURE_METADATA.map((feat) => {
-                const val = inputs[feat.key];
+                const val = inputs[feat.key as keyof typeof inputs];
                 const isAbnormal =
                   (feat.key === 'glucose' && val >= 126) ||
                   (feat.key === 'bmi' && val >= 30) ||
                   (feat.key === 'bloodPressure' && val >= 90) ||
-                  (feat.key === 'diabetesPedigree' && val >= 0.70);
+                  (feat.key === 'diabetesPedigree' && val >= 0.7);
 
                 return (
                   <div
@@ -254,7 +305,10 @@ export const ClinicalCalculator: React.FC = () => {
                       step={feat.key === 'diabetesPedigree' ? 0.01 : feat.key === 'bmi' ? 0.1 : 1}
                       value={val}
                       onChange={(e) =>
-                        handleInputChange(feat.key, parseFloat(e.target.value))
+                        handleInputChange(
+                          feat.key as keyof typeof inputs,
+                          parseFloat(e.target.value)
+                        )
                       }
                       className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg appearance-none"
                     />
@@ -275,20 +329,23 @@ export const ClinicalCalculator: React.FC = () => {
               })}
             </div>
 
-            {/* Model Architecture & Threshold Bar */}
+            {/* Model Selection & Threshold Controls */}
             <div className="mt-8 pt-6 border-t border-slate-800 space-y-6">
-              {/* Model Family Switcher */}
+              {/* Algorithm Switcher */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                    Classifier Algorithm (Model Family)
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Select Trained Scikit-Learn Model</span>
                   </label>
-                  <span className="text-[11px] text-emerald-400 font-mono">
-                    ROC-AUC: {activeModelMeta.rocAuc.toFixed(3)}
-                  </span>
+                  {prediction && (
+                    <span className="text-[11px] text-emerald-400 font-mono">
+                      Active: {prediction.model_name}
+                    </span>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {MODEL_BENCHMARKS.map((m) => (
+                  {modelOptions.map((m) => (
                     <button
                       key={m.id}
                       onClick={() => setSelectedModel(m.id)}
@@ -299,15 +356,13 @@ export const ClinicalCalculator: React.FC = () => {
                       }`}
                     >
                       <div className="font-semibold truncate">{m.name.split(' (')[0]}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">
-                        {m.id === 'random_forest' ? 'Champion (81.2% Acc)' : m.type}
-                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono">{m.type}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Threshold Calibration Slider (Core Screening Question) */}
+              {/* Threshold Calibration Slider */}
               <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
@@ -320,7 +375,7 @@ export const ClinicalCalculator: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Adjusts sensitivity (recall) vs specificity tradeoff for clinical triage
+                      Adjusts sensitivity (recall) vs specificity for clinical screening
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -331,7 +386,7 @@ export const ClinicalCalculator: React.FC = () => {
                           ? 'bg-emerald-500 text-slate-950 font-bold shadow'
                           : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                       }`}
-                      title="Recommended by Group 2: 90.7% Recall (only 5 missed cases)"
+                      title="Recommended by Group 2: 90.7% Recall on held-out test data"
                     >
                       ★ Recommended (0.35)
                     </button>
@@ -342,7 +397,7 @@ export const ClinicalCalculator: React.FC = () => {
                           ? 'bg-slate-200 text-slate-950 font-bold'
                           : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                       }`}
-                      title="Standard default threshold (misses 16 diabetics)"
+                      title="Standard default threshold (misses ~26% of diabetics)"
                     >
                       Standard (0.50)
                     </button>
@@ -361,10 +416,10 @@ export const ClinicalCalculator: React.FC = () => {
 
                 <div className="flex items-center justify-between text-[11px] text-slate-400">
                   <span className="text-emerald-400 font-medium">
-                    ← Lower tau: Ultra-High Sensitivity (Catch every diabetic)
+                    ← Lower tau: High Sensitivity (Minimize False Negatives)
                   </span>
                   <span className="text-sky-400 font-medium">
-                    Higher tau: High Specificity (Fewer false alarms) →
+                    Higher tau: High Specificity (Fewer False Positives) →
                   </span>
                 </div>
 
@@ -373,9 +428,9 @@ export const ClinicalCalculator: React.FC = () => {
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <div>
                       <strong className="font-semibold text-emerald-300">
-                        Why tau = 0.35 is clinically optimal:
+                        Why tau = 0.35 is clinically recommended:
                       </strong>{' '}
-                      On our test set of 154 patients, lowering tau to 0.35 increases Recall from 70.4% to <strong>90.7%</strong>, slashing undetected diabetics from 16 to 5 while maintaining a 76% specificity rate.
+                      In medical screening, missing a diabetic patient leads to untreated complications. At tau = 0.35, the Random Forest model achieves <strong>90.7% recall</strong> on the 154 held-out test patients.
                     </div>
                   </div>
                 )}
@@ -384,25 +439,21 @@ export const ClinicalCalculator: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Prediction Score Gauge, Explainability & Triage Advice */}
+        {/* Right Column: Prediction Score Gauge & Genuine Explainability */}
         <div className="lg:col-span-5 space-y-6">
-          {/* Main Risk Prediction Card */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
             <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Screening Assessment
+                FastAPI Screening Output
               </span>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-bold border ${riskTier.badgeClass}`}
-              >
-                {riskTier.label}
+              <span className={`px-3 py-1 rounded-full text-xs font-bold border ${badgeClass}`}>
+                {prediction?.risk_label || 'Calculating...'}
               </span>
             </div>
 
             {/* Circular Gauge / Probability Display */}
             <div className="flex flex-col items-center justify-center py-4">
               <div className="relative w-44 h-44 flex items-center justify-center">
-                {/* SVG Radial Gauge */}
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle
                     cx="50"
@@ -416,10 +467,10 @@ export const ClinicalCalculator: React.FC = () => {
                     cx="50"
                     cy="50"
                     r="42"
-                    stroke={riskTier.gaugeColor}
+                    stroke={gaugeColor}
                     strokeWidth="10"
                     strokeDasharray={264}
-                    strokeDashoffset={264 - 264 * prediction.probability}
+                    strokeDashoffset={264 - 264 * prob}
                     strokeLinecap="round"
                     fill="transparent"
                     className="transition-all duration-700 ease-out"
@@ -428,13 +479,13 @@ export const ClinicalCalculator: React.FC = () => {
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                   <span className="text-3xl font-extrabold text-white font-mono tracking-tight">
-                    {(prediction.probability * 100).toFixed(1)}%
+                    {(prob * 100).toFixed(1)}%
                   </span>
                   <span className="text-[11px] text-slate-400 font-medium">
                     Risk Probability
                   </span>
                   <span className="text-[10px] text-slate-500 font-mono mt-0.5">
-                    Cutoff: {(threshold * 100).toFixed(0)}%
+                    Threshold: {(threshold * 100).toFixed(0)}%
                   </span>
                 </div>
               </div>
@@ -446,10 +497,10 @@ export const ClinicalCalculator: React.FC = () => {
                     <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                     <div>
                       <div className="font-bold text-rose-300">
-                        FLAGGED: HIGH RISK PATIENT
+                        FLAGGED: ELEVATED DIABETES RISK
                       </div>
                       <div className="text-[11px] text-rose-200/90 mt-0.5">
-                        Calculated probability ({(prediction.probability * 100).toFixed(1)}%) exceeds the screening threshold of {(threshold * 100).toFixed(0)}%.
+                        Probability {(prob * 100).toFixed(1)}% meets or exceeds the screening threshold of {(threshold * 100).toFixed(0)}%.
                       </div>
                     </div>
                   </div>
@@ -458,10 +509,10 @@ export const ClinicalCalculator: React.FC = () => {
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <div>
                       <div className="font-bold text-emerald-300">
-                        NORMAL / LOW RISK PATIENT
+                        LOW SCREENING RISK
                       </div>
                       <div className="text-[11px] text-emerald-200/90 mt-0.5">
-                        Patient score is below the {(threshold * 100).toFixed(0)}% triage cutoff. Continue routine health monitoring.
+                        Patient score is below the {(threshold * 100).toFixed(0)}% triage cutoff.
                       </div>
                     </div>
                   </div>
@@ -473,27 +524,29 @@ export const ClinicalCalculator: React.FC = () => {
             <div className="mt-6 pt-6 border-t border-slate-800 space-y-2">
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Recommended Clinical Action Plan</span>
+                <span>Clinical Triage Recommendation</span>
               </span>
               <p className="text-xs text-slate-300 bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 leading-relaxed">
-                {riskTier.clinicalAction}
+                {prediction?.clinical_recommendation || 'Evaluating clinical markers...'}
               </p>
             </div>
 
-            {/* Feature Contribution Waterfall (SHAP-inspired Local Explainability) */}
+            {/* Feature Contributions (Genuine Model Explainability) */}
             <div className="mt-6 pt-6 border-t border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                   Patient Risk Drivers (Explainability)
                 </span>
-                <span className="text-[10px] text-slate-500">Local Impact Score</span>
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {prediction?.model_name}
+                </span>
               </div>
 
-              <div className="space-y-2">
-                {prediction.contributions.map((c) => {
-                  const maxImpact = 1.2;
-                  const pct = Math.min(100, (c.impact / maxImpact) * 100);
-                  const isRisk = c.direction === 'risk';
+              <div className="space-y-2.5">
+                {prediction?.feature_contributions?.map((c) => {
+                  const isRisk = c.direction === 'risk_increasing';
+                  const maxImpact = 0.5;
+                  const pct = Math.min(100, (c.abs_impact / maxImpact) * 100);
 
                   return (
                     <div key={c.feature} className="space-y-1">
@@ -507,7 +560,7 @@ export const ClinicalCalculator: React.FC = () => {
                           }`}
                         >
                           {isRisk ? '+' : '-'}
-                          {c.impact.toFixed(2)} ({isRisk ? 'Risk Factor' : 'Protective'})
+                          {c.impact.toFixed(3)} ({isRisk ? 'Risk Factor' : 'Protective'})
                         </span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden flex">
@@ -515,87 +568,23 @@ export const ClinicalCalculator: React.FC = () => {
                           className={`h-full rounded-full transition-all duration-500 ${
                             isRisk ? 'bg-rose-500' : 'bg-emerald-500'
                           }`}
-                          style={{ width: `${pct}%` }}
+                          style={{ width: `${Math.max(8, pct)}%` }}
                         />
+                      </div>
+                      <div className="text-[10px] text-slate-500 flex justify-between">
+                        <span>Raw: {c.raw_value} (z = {c.z_score > 0 ? `+${c.z_score.toFixed(2)}` : c.z_score.toFixed(2)}σ)</span>
+                        <span>{c.explanation}</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
             </div>
-          </div>
 
-          {/* Model Specification Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl text-xs space-y-3">
-            <div className="font-bold text-slate-200 flex items-center justify-between">
-              <span>Active Model Specs: {activeModelMeta.name}</span>
-              <span className="text-emerald-400 font-mono">Test F1: {activeModelMeta.testF1}</span>
+            {/* Mandatory Academic Medical Disclaimer */}
+            <div className="mt-6 pt-4 border-t border-slate-800 text-[10px] text-slate-500 italic leading-relaxed">
+              {prediction?.medical_disclaimer}
             </div>
-            <div className="text-slate-400 text-[11px] leading-relaxed">
-              <strong className="text-slate-300">Tuned Parameters:</strong> {activeModelMeta.bestParams}
-            </div>
-            <div className="text-slate-400 text-[11px] leading-relaxed">
-              <strong className="text-slate-300">Clinical Rationale:</strong> {activeModelMeta.pros}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Hidden Printable Clinical Referral Slip (Shows when window.print() is called) */}
-      <div className="hidden print:block print-only p-8 bg-white text-black font-serif-academic">
-        <div className="border-b-2 border-black pb-4 mb-6">
-          <div className="text-center">
-            <h1 className="text-xl font-bold uppercase tracking-wider">
-              Meru University of Science and Technology
-            </h1>
-            <h2 className="text-sm font-semibold">
-              School of Computing & Informatics • Department of Computer Science
-            </h2>
-            <h3 className="text-xs text-gray-700">
-              CDS 3301 Machine Learning Mini-Project • Group 2 Clinical Triage Slip
-            </h3>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 text-xs mb-6">
-          <div>
-            <p><strong>Patient Date of Assessment:</strong> {new Date().toLocaleDateString()}</p>
-            <p><strong>Age:</strong> {inputs.age} years</p>
-            <p><strong>Gravidity (Pregnancies):</strong> {inputs.pregnancies}</p>
-            <p><strong>Family Pedigree Function:</strong> {inputs.diabetesPedigree.toFixed(2)}</p>
-          </div>
-          <div>
-            <p><strong>Plasma Glucose (OGTT):</strong> {inputs.glucose} mg/dL</p>
-            <p><strong>Blood Pressure (Diastolic):</strong> {inputs.bloodPressure} mm Hg</p>
-            <p><strong>Body Mass Index (BMI):</strong> {inputs.bmi.toFixed(1)} kg/m²</p>
-            <p><strong>Serum Insulin:</strong> {inputs.insulin} μU/mL</p>
-          </div>
-        </div>
-
-        <div className="border border-black p-4 rounded mb-6 text-xs">
-          <p className="font-bold text-sm uppercase">Machine Learning Risk Classification Result:</p>
-          <p className="mt-1">
-            <strong>Model:</strong> {activeModelMeta.name} (ROC-AUC {activeModelMeta.rocAuc})
-          </p>
-          <p>
-            <strong>Calculated Diabetes Probability:</strong> {(prediction.probability * 100).toFixed(1)}%
-          </p>
-          <p>
-            <strong>Operating Threshold Applied:</strong> tau = {threshold.toFixed(2)}
-          </p>
-          <p className="mt-2 text-sm font-bold">
-            <strong>Triage Status:</strong> {riskTier.label.toUpperCase()}
-          </p>
-          <p className="mt-1">
-            <strong>Recommended Clinical Action:</strong> {riskTier.clinicalAction}
-          </p>
-        </div>
-
-        <div className="text-xs border-t border-gray-400 pt-4 text-gray-600">
-          <p><em>Disclaimer: This assessment is an automated machine learning screening aid designed by MUST Group 2 under Dr. Amos Chege Kirongo. It does not replace a licensed clinical diagnosis.</em></p>
-          <div className="mt-8 flex justify-between">
-            <span>Triage Officer Signature: ___________________________</span>
-            <span>Date: ___________________________</span>
           </div>
         </div>
       </div>

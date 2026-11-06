@@ -226,7 +226,7 @@ export const TaskExplorer: React.FC = () => {
                 Glucose exhibits the highest linear association ($r = +0.493$), followed by BMI ($+0.312$) and Age ($+0.238$).
               </p>
               <div className="space-y-2.5 pt-2">
-                {FEATURE_CORRELATIONS.map((c) => (
+                {FEATURE_CORRELATIONS.map((c: { feature: string; r: number; pValue: string }) => (
                   <div key={c.feature} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-300 font-medium">{c.feature}</span>

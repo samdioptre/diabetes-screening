@@ -8,6 +8,7 @@
 import React from 'react';
 import {
   Activity,
+  Database,
   BarChart3,
   BookOpen,
   FileCode2,
@@ -16,17 +17,19 @@ import {
   Radio,
   Code2,
   GraduationCap,
+  Download,
+  Server,
 } from 'lucide-react';
 
 export type TabType =
   | 'prototype'
-  | 'tasks'
+  | 'dataset'
+  | 'evaluation'
   | 'report'
   | 'notebook'
   | 'slides'
   | 'milestone'
-  | 'monitoring'
-  | 'api';
+  | 'monitoring';
 
 interface NavbarProps {
   activeTab: TabType;
@@ -42,52 +45,59 @@ export const Navbar: React.FC<NavbarProps> = ({
   const tabs = [
     {
       id: 'prototype' as TabType,
-      label: 'Clinical Prototype',
+      label: 'Clinical Screener',
       icon: Activity,
-      badge: 'Task 7 Deployed',
+      badge: 'Live FastAPI',
       color: 'text-emerald-400',
     },
     {
-      id: 'tasks' as TabType,
-      label: 'Tasks 1–8 Explorer',
-      icon: BarChart3,
-      badge: 'EDA & Models',
+      id: 'dataset' as TabType,
+      label: 'Dataset Explorer',
+      icon: Database,
+      badge: 'N=768 EDA',
       color: 'text-sky-400',
     },
     {
+      id: 'evaluation' as TabType,
+      label: 'Model Evaluation',
+      icon: BarChart3,
+      badge: 'ROC & PR Curves',
+      color: 'text-purple-400',
+    },
+    {
       id: 'report' as TabType,
-      label: '12-Page Report',
+      label: 'Academic Report',
       icon: BookOpen,
       badge: 'PDF / Print',
       color: 'text-indigo-400',
     },
     {
       id: 'notebook' as TabType,
-      label: 'Jupyter Notebook',
+      label: 'ML Notebook',
       icon: FileCode2,
       badge: '.ipynb Ready',
       color: 'text-amber-400',
     },
     {
       id: 'slides' as TabType,
-      label: '10-Min Presentation',
+      label: '10-Min Defense',
       icon: Presentation,
       badge: '12 Slides',
-      color: 'text-purple-400',
-    },
-    {
-      id: 'milestone' as TabType,
-      label: 'Milestone 1 & Team',
-      icon: Users,
-      badge: 'Group 2',
       color: 'text-rose-400',
     },
     {
-      id: 'monitoring' as TabType,
-      label: 'Drift Monitor',
-      icon: Radio,
-      badge: 'PSI / MLOps',
+      id: 'milestone' as TabType,
+      label: 'Team & Milestones',
+      icon: Users,
+      badge: 'Group 2',
       color: 'text-teal-400',
+    },
+    {
+      id: 'monitoring' as TabType,
+      label: 'MLOps Drift',
+      icon: Radio,
+      badge: 'PSI Alerts',
+      color: 'text-cyan-400',
     },
   ];
 
@@ -105,30 +115,39 @@ export const Navbar: React.FC<NavbarProps> = ({
                 MERU UNIVERSITY OF SCIENCE AND TECHNOLOGY
               </div>
               <div className="text-slate-400 text-[11px] flex items-center gap-2">
-                <span>School of Computing & Informatics</span>
+                <span>School of Computing &amp; Informatics</span>
                 <span className="text-slate-600">•</span>
                 <span className="text-emerald-400 font-medium">Department of Computer Science</span>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-[11px]">
+          <div className="flex flex-wrap items-center gap-2.5 text-[11px]">
             <span className="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-mono">
               CDS 3301: Machine Learning
             </span>
-            <span className="px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 font-semibold">
-              Group 2 (5 Members)
+            <span className="px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 font-semibold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>FastAPI Backend Active (Port 8001)</span>
             </span>
-            <span className="text-slate-400 hidden md:inline">
-              Lecturer: <span className="text-slate-200 font-medium">Dr. Amos Chege Kirongo</span>
-            </span>
+
+            <a
+              href="/diabetes-risk-screening-must-group2.zip"
+              download="diabetes-risk-screening-must-group2.zip"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition shadow-sm"
+              title="Download full project repository as ZIP archive"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download Project ZIP</span>
+            </a>
+
             <button
               onClick={onOpenApiModal}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-white font-medium border border-slate-700 transition shadow-sm"
               title="View REST API specifications and code snippets"
             >
-              <Code2 className="w-3.5 h-3.5" />
-              <span>REST API</span>
+              <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>API Specs</span>
             </button>
           </div>
         </div>

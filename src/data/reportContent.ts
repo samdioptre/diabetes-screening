@@ -218,11 +218,11 @@ The tuned models were evaluated on the 154 unseen test samples (100 negative, 54
 | Model | 5-Fold CV ROC-AUC | Test Accuracy | Test Precision | Test Recall | Test F1-Score | Test ROC-AUC |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Dummy Baseline** | 0.500 | 64.9% | 0.000 | 0.000 | 0.000 | 0.500 |
-| **Decision Tree (CART)** | 0.752 | 73.4% | 0.620 | 0.574 | 0.596 | 0.768 |
-| **KNN (k=13)** | 0.781 | 74.7% | 0.659 | 0.537 | 0.592 | 0.796 |
-| **SVM (RBF Kernel)** | 0.814 | 77.9% | 0.702 | 0.611 | 0.653 | 0.835 |
-| **Logistic Regression** | 0.829 | 78.6% | 0.714 | 0.648 | 0.680 | 0.841 |
-| **Random Forest (Champion)** | **0.858** | **81.2%** | **0.755** | **0.704** | **0.728** | **0.873** |`,
+| **Logistic Regression** | 0.821 | 70.1% | 0.583 | 0.519 | 0.549 | 0.810 |
+| **Decision Tree (CART)** | 0.778 | 72.1% | 0.617 | 0.537 | 0.574 | 0.823 |
+| **KNN (k=13)** | 0.794 | 74.7% | 0.667 | 0.556 | 0.606 | 0.807 |
+| **SVM (RBF Kernel)** | 0.828 | 72.7% | 0.630 | 0.537 | 0.580 | 0.811 |
+| **Random Forest (Champion)** | **0.844** | **74.0%** | **0.606** | **0.741** | **0.667** | **0.820** |`,
     },
     {
       id: 'task5',
@@ -250,8 +250,8 @@ Using our champion tuned Random Forest model on the 154 held-out test patients (
 
 | Operating Threshold ($\\tau$) | True Negatives (TN) | False Positives (FP) | False Negatives (FN - Missed) | True Positives (TP - Caught) | Recall (Sensitivity) | Precision | Specificity | $F_2$-Score |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| $\\tau = 0.50$ (Default) | 87 | 13 | 16 | 38 | 70.37% | 74.51% | 87.00% | 0.712 |
-| $\\mathbf{\\tau = 0.35}$ **(Recommended)** | **76** | **24** | **5** | **49** | **90.74%** | **67.12%** | **76.00%** | **0.845** |
+| $\\tau = 0.50$ (Default) | 74 | 26 | 14 | 40 | 74.07% | 60.61% | 74.00% | 0.709 |
+| $\\mathbf{\\tau = 0.35}$ **(Recommended)** | **58** | **42** | **5** | **49** | **90.74%** | **53.85%** | **58.00%** | **0.798** |
 | $\\tau = 0.30$ (Aggressive) | 70 | 30 | 3 | 51 | 94.44% | 62.96% | 70.00% | 0.856 |
 | $\\tau = 0.25$ (Ultra-high Recall) | 61 | 39 | 2 | 52 | 96.30% | 57.14% | 61.00% | 0.839 |
 

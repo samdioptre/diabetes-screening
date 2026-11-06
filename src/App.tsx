@@ -9,7 +9,8 @@
 import React, { useState } from 'react';
 import { Navbar, TabType } from './components/Navbar';
 import { ClinicalCalculator } from './components/Prototype/ClinicalCalculator';
-import { TaskExplorer } from './components/Tasks/TaskExplorer';
+import { DatasetExplorer } from './components/Dataset/DatasetExplorer';
+import { ModelEvaluationExplorer } from './components/Evaluation/ModelEvaluationExplorer';
 import { FullReportView } from './components/AcademicReport/FullReportView';
 import { JupyterNotebookView } from './components/Notebook/JupyterNotebookView';
 import { SlideDeckView } from './components/Presentation/SlideDeckView';
@@ -31,9 +32,10 @@ export default function App() {
       />
 
       {/* Main Tab Content */}
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-16 max-w-7xl mx-auto px-4 w-full">
         {activeTab === 'prototype' && <ClinicalCalculator />}
-        {activeTab === 'tasks' && <TaskExplorer />}
+        {activeTab === 'dataset' && <DatasetExplorer />}
+        {activeTab === 'evaluation' && <ModelEvaluationExplorer />}
         {activeTab === 'report' && <FullReportView />}
         {activeTab === 'notebook' && <JupyterNotebookView />}
         {activeTab === 'slides' && <SlideDeckView />}
@@ -65,7 +67,7 @@ export default function App() {
             Group 2: Ordit Kagwira (CT202/114188/23), Beauttah Kipruttoh (CT202/113636/23), Atitwa Samuel Makokha (CT202/113631/23), Kiplangat Dancun (CT202/113622/23), Wamukota Kevin (CT202/106143/21).
           </div>
           <div className="text-[11px] text-slate-600">
-            Course Lecturer: Dr. Amos Chege Kirongo (<a href="mailto:akirongo@must.ac.ke" className="hover:text-emerald-400 transition">akirongo@must.ac.ke</a>) • All Deliverables Prepared for Milestone 1 &amp; Final Assessment.
+            Course Lecturer: Dr. Amos Chege Kirongo (<a href="mailto:akirongo@must.ac.ke" className="hover:text-emerald-400 transition">akirongo@must.ac.ke</a>) • Real Machine Learning Pipeline Powered by Scikit-Learn &amp; FastAPI.
           </div>
         </div>
       </footer>
