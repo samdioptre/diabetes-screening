@@ -17,10 +17,12 @@ import { SlideDeckView } from './components/Presentation/SlideDeckView';
 import { MilestoneAndTeam } from './components/Milestone/MilestoneAndTeam';
 import { ModelMonitoring } from './components/Prototype/ModelMonitoring';
 import { ApiExportModal } from './components/Prototype/ApiExportModal';
+import { SubmissionChecklistModal } from './components/Checklist/SubmissionChecklistModal';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('prototype');
   const [isApiModalOpen, setIsApiModalOpen] = useState<boolean>(false);
+  const [isChecklistModalOpen, setIsChecklistModalOpen] = useState<boolean>(false);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
@@ -29,6 +31,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenApiModal={() => setIsApiModalOpen(true)}
+        onOpenChecklistModal={() => setIsChecklistModalOpen(true)}
       />
 
       {/* Main Tab Content */}
@@ -47,6 +50,13 @@ export default function App() {
       <ApiExportModal
         isOpen={isApiModalOpen}
         onClose={() => setIsApiModalOpen(false)}
+      />
+
+      {/* Submission Correction Checklist Modal (9/9 Completed - 100%) */}
+      <SubmissionChecklistModal
+        isOpen={isChecklistModalOpen}
+        onClose={() => setIsChecklistModalOpen(false)}
+        onNavigateTab={(tab) => setActiveTab(tab)}
       />
 
       {/* Footer */}

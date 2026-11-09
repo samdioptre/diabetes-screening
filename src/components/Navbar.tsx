@@ -19,6 +19,7 @@ import {
   GraduationCap,
   Download,
   Server,
+  CheckCircle2,
 } from 'lucide-react';
 
 export type TabType =
@@ -35,12 +36,14 @@ interface NavbarProps {
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
   onOpenApiModal: () => void;
+  onOpenChecklistModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   onOpenApiModal,
+  onOpenChecklistModal,
 }) => {
   const tabs = [
     {
@@ -131,14 +134,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>FastAPI Backend Active (Port 8001)</span>
             </span>
 
+            <button
+              onClick={onOpenChecklistModal}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-sm animate-pulse hover:animate-none"
+              title="View Submission Correction Checklist (9 of 9 Completed - 100%)"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+              <span>Checklist (9/9 • 100%)</span>
+            </button>
+
             <a
-              href="/diabetes-risk-screening-must-group2.zip"
-              download="diabetes-risk-screening-must-group2.zip"
+              href="/GROUP_02_Diabetes_Risk_Screening_Prototype.zip"
+              download="GROUP_02_Diabetes_Risk_Screening_Prototype.zip"
               className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition shadow-sm"
-              title="Download full project repository as ZIP archive"
+              title="Download full project repository and deliverables as ZIP archive"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download Project ZIP</span>
+              <span>Project ZIP</span>
             </a>
 
             <button

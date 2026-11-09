@@ -79,23 +79,43 @@ export const FullReportView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <a
+            href="/GROUP_02_Diabetes_Risk_Screening_Report.docx"
+            download="GROUP_02_Diabetes_Risk_Screening_Report.docx"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-semibold transition shadow-sm"
+            title="Download Word Document (.docx)"
+          >
+            <Download className="w-3.5 h-3.5 text-blue-400" />
+            <span>Download .docx</span>
+          </a>
+
+          <a
+            href="/GROUP_02_Diabetes_Risk_Screening_Report.pdf"
+            download="GROUP_02_Diabetes_Risk_Screening_Report.pdf"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition shadow-sm"
+            title="Download PDF Document (.pdf)"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Download .pdf</span>
+          </a>
+
           <button
             onClick={handleDownloadMarkdown}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition shadow-sm"
             title="Download full markdown text"
           >
-            <Download className="w-4 h-4 text-indigo-400" />
-            <span>Export Markdown</span>
+            <Download className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Markdown</span>
           </button>
 
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 active:scale-95"
             title="Print or Save as PDF"
           >
             <Printer className="w-4 h-4" />
-            <span>Print / Save as PDF (Ctrl+P)</span>
+            <span>Print View (Ctrl+P)</span>
           </button>
         </div>
       </div>

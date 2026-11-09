@@ -90,14 +90,15 @@ export const JupyterNotebookView: React.FC = () => {
             <span>{isRunningAll ? 'Executing Cells...' : 'Run All Cells'}</span>
           </button>
 
-          <button
-            onClick={handleDownloadIpynb}
+          <a
+            href="/GROUP_02_Diabetes_Risk_Screening_Notebook.ipynb"
+            download="GROUP_02_Diabetes_Risk_Screening_Notebook.ipynb"
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition shadow-lg shadow-amber-500/20 active:scale-95"
             title="Download the official .ipynb file for grading submission"
           >
             <Download className="w-4 h-4" />
             <span>Download .ipynb Notebook</span>
-          </button>
+          </a>
         </div>
       </div>
 

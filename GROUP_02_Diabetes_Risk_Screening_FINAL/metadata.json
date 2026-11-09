@@ -1,0 +1,6 @@
+{
+  "name": "CDS 3301 Diabetes Risk Screening - MUST Group 2",
+  "description": "Meru University of Science and Technology CDS 3301 Machine Learning Mini-Project on Diabetes Risk Screening by Group 2. Includes clinical risk screening prototype, EDA, model evaluation, notebook, report, and slide deck.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

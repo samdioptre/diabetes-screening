@@ -255,14 +255,25 @@ Lecturer: Dr. Amos Chege Kirongo (akirongo@must.ac.ke)
       {/* Signed Contribution Statement Table */}
       {activeTab === 'contribution' && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-          <div className="pb-4 border-b border-slate-800">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Users className="w-5 h-5 text-rose-400" />
-              <span>Group 2 Contribution Statement & Verification</span>
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Every member has taken equal ownership of the tasks outlined in the marking scheme
-            </p>
+          <div className="pb-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-rose-400" />
+                <span>Group 2 Contribution Statement & Verification</span>
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Every member has taken equal ownership of the tasks outlined in the marking scheme
+              </p>
+            </div>
+            <a
+              href="/GROUP_02_Contribution_Statement.docx"
+              download="GROUP_02_Contribution_Statement.docx"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition shadow-sm"
+              title="Download official contribution statement ready for 5 signatures"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download Statement (.docx)</span>
+            </a>
           </div>
 
           <div className="overflow-x-auto">

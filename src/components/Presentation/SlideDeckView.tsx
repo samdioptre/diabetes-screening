@@ -151,6 +151,16 @@ export const SlideDeckView: React.FC = () => {
             <span>Speaker Notes</span>
           </button>
 
+          <a
+            href="/GROUP_02_Diabetes_Risk_Screening_Slides.pptx"
+            download="GROUP_02_Diabetes_Risk_Screening_Slides.pptx"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition shadow-sm"
+            title="Download PowerPoint Slides Presentation (.pptx)"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download .pptx</span>
+          </a>
+
           <button
             onClick={handleDownloadSlidesOutline}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition"
